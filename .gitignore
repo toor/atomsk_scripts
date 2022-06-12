@@ -1,2 +1,3 @@
 *.xsf
 *.cfg
+./snakemake/*

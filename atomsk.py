@@ -4,6 +4,8 @@ import numpy as np
 import sys
 import math
 
+element = "Fe"
+
 def truncate(num, digits) -> float:
     dec = len(str(num).split('.')[1])
     if dec <= digits:
@@ -47,7 +49,7 @@ def generate_cells(d_nbr):
 # This generates the correct unit cell for a specified element,
 # atomic spacing and lattice type/orientation.
 # Returns: the filename of the relevant XSF file produced as well as the
-def generate_unit_cell(input_file, d_nbr, element, lattice_type):
+def generate_unit_cell(input_file, d_nbr, lattice_type):
     cells = generate_cells(d_nbr)
     
     # Extract information about the relevant cell
@@ -58,60 +60,54 @@ def generate_unit_cell(input_file, d_nbr, element, lattice_type):
     lattice = lattice_type.split('_')[0]
 
     args = ["atomsk",
-            " --create ",
+            "--create",
             lattice,
             str(a),
             element,
             orient,
-            " -fractional ",
+            "-fractional",
             input_file,
-            "-nthreads",
-            "1"]
+            "cfg",
+            "-ow"]
     cmd = ' '.join(args)
     print("atomsk: Generating unit cell")
     print(cmd)
-    subprocess.run(args)
+    # TODO: subprocess.run() seems to perhaps pass the wrong intput to atomsk, in that
+    # atomsk reads the orientation argument as the filename and thus names the files
+    # wrongly, causing atomsk to pick up filenames incorrectly. Also, I wonder whether
+    # snakemake is capturing the unit cell files, in the format:
+    # <lattice>_<orientation>_<element>.cfg.
+    os.system(cmd)
+    #subprocess.run(args)
 
     return d_plane
 
 def generate_supercell(input_file, output_file, d_plane, layers):   
-    args = ["atomsk ",
+    args = ["atomsk",
             input_file,
-            " -duplicate 1 1 ",
-            str(layers),
-            " -fractional ",
-            output_file]
+            "-duplicate",
+            "1 1 " + str(layers),
+            "-fractional",
+            output_file,
+            "cfg",
+            "-ow"]
     cmd = ' '.join(args)
     print("atomsk: Generating supercell.")
     print(cmd)
 
     #subprocess.run(args)
+    os.system(cmd)
 
     return
 
 # Argument format: Smallest number of monolayers, largest number of monolayers,
 # lattice type/orientaion (specified in the format <lattice_type>_orientation)
-def main():
-    args = sys.argv[1:]
-
-    if len(args) < 5:
-        print("Expected 5 arguments, but only " + str(len(args)) + " were given.")
-        sys.exit(0)
-    thickness1 = int(args[0])
-    thickness2 = int(args[1])
-    
-    lattice_type = args[2]
-    d_nbr = float(args[3])
-    element = args[4]
-    
+def main(lattice_type, a, layers, output_file):   
     input_file = lattice_type + "_" + element + ".cfg"
 
-    d_plane = generate_unit_cell(input_file, d_nbr, element, lattice_type)
+    d_plane = generate_unit_cell(input_file, float(a), lattice_type)
+    generate_supercell(input_file, output_file, d_plane, int(layers))
     
-    for j in range(thickness1, thickness2 + 1):
-        output_file = input_file.split('_')[0] + "_" + str(j) + ".cfg"
-        generate_supercell(input_file, output_file, d_plane, j)
-
     return
 
-main()
+main(snakemake.params[0], snakemake.params[1], snakemake.params[2], snakemake.output[0])
