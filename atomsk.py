@@ -1,4 +1,3 @@
-import os
 import subprocess
 import numpy as np
 import sys
@@ -51,53 +50,71 @@ def generate_cells(d_nbr):
 # Returns: the filename of the relevant XSF file produced as well as the
 def generate_unit_cell(input_file, d_nbr, lattice_type):
     cells = generate_cells(d_nbr)
-    
-    # Extract information about the relevant cell
-    orient = "orient " + cells[lattice_type]["orient"]
+
+    orient = cells[lattice_type]["orient"].split(' ')
+    print(orient)
     a = truncate(cells[lattice_type]["a"], 3)
     d_plane = cells[lattice_type]["d_plane"]
 
     lattice = lattice_type.split('_')[0]
-
-    args = ["atomsk",
+    
+    make_unit_cell = ["atomsk",
             "--create",
             lattice,
             str(a),
             element,
-            orient,
+            "orient",
+            orient[0],
+            orient[1],
+            orient[2],
+            "-ow",
             "-fractional",
             input_file,
-            "cfg",
-            "-ow"]
-    cmd = ' '.join(args)
-    print("atomsk: Generating unit cell")
-    print(cmd)
-    # TODO: subprocess.run() seems to perhaps pass the wrong intput to atomsk, in that
-    # atomsk reads the orientation argument as the filename and thus names the files
-    # wrongly, causing atomsk to pick up filenames incorrectly. Also, I wonder whether
-    # snakemake is capturing the unit cell files, in the format:
-    # <lattice>_<orientation>_<element>.cfg.
-    os.system(cmd)
-    #subprocess.run(args)
+            "cfg"]
+    # convert to XCrysDen XSF format for easy conversion
+    # to JAMS
+    convert_unit_cell_xsf = ["atomsk",
+            input_file,
+            "-ow",
+            "xsf"]
+
+    subprocess.run(make_unit_cell)
+    subprocess.run(convert_unit_cell_xsf)
 
     return d_plane
 
 def generate_supercell(input_file, output_file, d_plane, layers):   
-    args = ["atomsk",
+    cut_plane = str((layers - 1)*d_plane + 0.01)
+    cell_z = str(layers*d_plane)
+
+    make_supercell = ["atomsk",
             input_file,
             "-duplicate",
-            "1 1 " + str(layers),
+            "1",
+            "1",
+            str(layers),
+            "-cut",
+            "above",
+            cut_plane,
+            "z",
+            "-cell",
+            "set",
+            cell_z,
+            "H3",
             "-fractional",
+            "-ow",
             output_file,
-            "cfg",
-            "-ow"]
-    cmd = ' '.join(args)
-    print("atomsk: Generating supercell.")
-    print(cmd)
+            "cfg"]
 
-    #subprocess.run(args)
-    os.system(cmd)
+    convert_supercell_xsf = ["atomsk",
+            output_file,
+            "-ow",
+            "xsf"]
 
+    subprocess.run(make_supercell)
+    # convert to an XSF file for visualisation and easy conversion
+    # to the relevant file format
+    subprocess.run(convert_supercell_xsf)
     return
 
 # Argument format: Smallest number of monolayers, largest number of monolayers,
