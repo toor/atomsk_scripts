@@ -28,6 +28,10 @@ rule make_supercell:
     script:
         "atomsk.py"
 
+#rule cleanup:
+    #shell:
+        #"rm *.cfg"
+
 #rule make_jams_cell:
 #    input:
 #        "{cell}_{constant}_{layer}.cfg"
