@@ -198,7 +198,6 @@ def main(element, lattice_type, a, layers, output_file):
     generate_supercell(input_file, output_file, d_plane, int(layers))
     
     input_file = output_file
-    output_file = output_file.split('.')[0] + "JAMS" + ".cfg"
 
     convert_jams(element, a, input_file, output_file)
 
