@@ -1,3 +1,6 @@
+const = 2.5
+elem = "Fe"
+
 layers = []
 thickness_i = 3
 thickness_f = 10
@@ -13,7 +16,7 @@ CELLS = ["sc_100",
 
 rule all:
     input:
-        expand("{cell}_{constant}_{layer}JAMS.cfg", cell=CELLS, constant=2.5, layer=layers)
+        expand("{cell}_{constant}_{layer}JAMS.cfg", cell=CELLS, constant=const, layer=layers)
 # NOTE: The constant passed here is the nearest-neighbour distance
 # between atomic sites - NOT the lattice constant/lattice parameter a.
 # The conversion is done in `atomsk.py`
@@ -21,7 +24,7 @@ rule make_supercell:
     output:
         "{cell}_{constant}_{layer}JAMS.cfg"
     params:
-        element="Fe",
+        element=elem,
         cell=lambda wc: wc.cell,
         constant=lambda wc: wc.constant,
         layer=lambda wc: wc.layer
