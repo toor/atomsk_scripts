@@ -46,7 +46,6 @@ def generate_cells(d_nbr):
 
 # This generates the correct unit cell for a specified element,
 # atomic spacing and lattice type/orientation.
-# Returns: the filename of the relevant XSF file produced as well as the
 def generate_unit_cell(input_file, d_nbr, lattice_type, element):
     cells = generate_cells(d_nbr)
 
@@ -79,7 +78,7 @@ def generate_unit_cell(input_file, d_nbr, lattice_type, element):
     subprocess.run(make_unit_cell)
     #subprocess.run(convert_unit_cell_xsf)
 
-    return d_plane
+    return a, d_plane
 
 def generate_supercell(input_file, output_file, d_plane, layers):   
     cut_plane = str((layers - 1)*d_plane + 0.01)
@@ -115,7 +114,7 @@ def generate_supercell(input_file, output_file, d_plane, layers):
     #subprocess.run(convert_supercell_xsf)
     return
 
-def read_unit_cell(filename, element):   
+def read_unit_cell(filename, element, constant):   
     a1 = []
     a2 = []
     a3 = []
@@ -157,15 +156,15 @@ def read_unit_cell(filename, element):
             coords.append(pos.strip('\t\n\r').split('    '))
 
         for i, x in enumerate([a, b, c]):
-            lattice_vectors[i].append(str(float(x[0].split('=')[1].strip())))
-            lattice_vectors[i].append(str(float(x[1].split('=')[1].strip())))
-            lattice_vectors[i].append(str(float(x[2].split('=')[1].strip()))) 
+            lattice_vectors[i].append(str((float(x[0].split('=')[1].strip()))/constant))
+            lattice_vectors[i].append(str((float(x[1].split('=')[1].strip()))/constant))
+            lattice_vectors[i].append(str((float(x[2].split('=')[1].strip()))/constant)) 
 
         return a1, a2, a3, coords           
 
 def convert_jams(element, a, input_file, output_file):
     A = 1e-10 # 1 angstrom
-    a1, a2, a3, coords = read_unit_cell(input_file, element)
+    a1, a2, a3, coords = read_unit_cell(input_file, element, a)
 
     a1 = ', '.join(a1)
     a2 = ', '.join(a2)
@@ -184,17 +183,16 @@ def convert_jams(element, a, input_file, output_file):
         
         for j in range(0, (len(coords) - 1)):
             coord = ', '.join(coords[j])
-            f.write("    (\"Fe\", [" + str(coord) + "]),\n")
-        f.write("    (\"Fe\", [" + str(coord) + "]));\n")
-        f.write("};")
+            f.write("    (\"" + element + "\", [" + str(coord) + "]),\n")
+        f.write("    (\"" + element + "\", [" + str(coord) + "]));\n")
+        f.write("};\n")
         f.close()
         return
-# Argument format: Smallest number of monolayers, largest number of monolayers,
-# lattice type/orientaion (specified in the format <lattice_type>_orientation)
-def main(element, lattice_type, a, layers, output_file):   
+
+def main(element, lattice_type, d_nbr, layers, output_file):   
     input_file = lattice_type + "_" + element + ".cfg"
 
-    d_plane = generate_unit_cell(input_file, float(a), lattice_type, element)
+    a, d_plane = generate_unit_cell(input_file, float(d_nbr), lattice_type, element)
     generate_supercell(input_file, output_file, d_plane, int(layers))
     
     input_file = output_file
