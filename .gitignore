@@ -1,3 +1,5 @@
 *.xsf
-*.cfg
+sc_*.cfg
+bcc_*.cfg
+fcc_*.cfg
 snakemake/
