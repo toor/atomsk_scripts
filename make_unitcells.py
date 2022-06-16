@@ -169,7 +169,9 @@ def convert_jams(element, a, input_file, output_file):
     a1 = ', '.join(a1)
     a2 = ', '.join(a2)
     a3 = ', '.join(a3)
-   
+    
+    # See https://github.com/stonerlab/jams.git for more examples
+    # of JAMS' config file format - it uses the libconfig library
     with open(output_file, "w") as f:
         f.write("unitcell = {\n")
         f.write("  parameter = " + str(float(a)*A) + ";\n")
@@ -181,10 +183,14 @@ def convert_jams(element, a, input_file, output_file):
         f.write("\n")
         f.write("  positions = (\n")
         
-        for j in range(0, (len(coords) - 1)):
+        atom_count = len(coords)
+        for j in range(0, (atom_count)):
             coord = ', '.join(coords[j])
-            f.write("    (\"" + element + "\", [" + str(coord) + "]),\n")
-        f.write("    (\"" + element + "\", [" + str(coord) + "]));\n")
+            f.write("    (\"" + element + "\", [" + str(coord) + "])")
+            if j==(atom_count - 1):
+                f.write(");\n")
+            else:
+                f.write(",\n")
         f.write("};\n")
         f.close()
         return
