@@ -63,6 +63,7 @@ def generate_unit_cell(input_file, a, lattice_type, element):
             orient[0],
             orient[1],
             orient[2],
+            "-fractional",
             "-ow",
             input_file,
             "cfg"]
@@ -82,8 +83,10 @@ def generate_unit_cell(input_file, a, lattice_type, element):
     return d_plane
 
 def generate_supercell(input_file, output_file, d_plane, layers):   
+    print("Generating a supercell with " + str(layers) + " layers from input " + input_file)
+    print("Supercell name: " + output_file)
     cut_plane = str((layers - 1)*d_plane + 0.01)
-    cell_z = str(layers*d_plane)
+    cell_z = str((layers - 1)*d_plane)
 
     make_supercell = ["atomsk",
             input_file,
@@ -95,26 +98,29 @@ def generate_supercell(input_file, output_file, d_plane, layers):
             "above",
             cut_plane,
             "z",
-            "-cell",
-            "set",
-            cell_z,
-            "H3",
+            "-fractional",
             "-ow",
             output_file,
             "cfg"]
 
-    convert_supercell_xsf = ["atomsk",
+    cut_layers = ["atomsk",
             output_file,
-            "-fractional",
+            "-cut",
+            "above",
+            cut_plane,
+            "z",
             "-ow",
-            "xsf"]
-
+            output_file, 
+            "cfg"]
+    print("before supercell")
     subprocess.run(make_supercell,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT)
-    # convert to an XSF file for visualisation and easy conversion
-    # to the relevant file format
-    #subprocess.run(convert_supercell_xsf)
+    print("ran supercell")
+    #subprocess.run(cut_layers,
+            #stdout=subprocess.DEVNULL,
+            #stderr=subprocess.STDOUT)
+    print("ran cut_layers")
     return
 
 def read_unit_cell(filename, element, constant):   
@@ -195,17 +201,16 @@ def convert_jams(element, a, input_file, output_file):
                 f.write(",\n")
         f.write("};\n")
         f.close()
+
         return
 
-def main(element, lattice_type, a, layers, output_file):   
+def main(element, lattice_type, a, layers, output_file1, output_file2):   
     input_file = lattice_type + "_" + element + ".cfg"
 
     d_plane = generate_unit_cell(input_file, float(a), lattice_type, element)
-    generate_supercell(input_file, output_file, d_plane, int(layers))
-    
-    input_file = output_file
+    generate_supercell(input_file, output_file1, d_plane, int(layers))
 
-    convert_jams(element, a, input_file, output_file)
+    convert_jams(element, a, output_file1, output_file2)
 
     return
 
@@ -213,4 +218,5 @@ main(snakemake.params[0],
     snakemake.params[1],
     snakemake.params[2],
     snakemake.params[3],
-    snakemake.output[0])
+    snakemake.output[0],
+    snakemake.output[1])
