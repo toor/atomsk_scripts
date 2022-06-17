@@ -13,32 +13,32 @@ def truncate(num, digits) -> float:
 
 # This function takes in a parameter which specifies the distance between neighbouring
 # atoms, and returns a dictionary of allowed unit cell types and relevant parameters
-def generate_cells(d_nbr):
+def generate_cells(a):
     cells = {
         "sc_100" : {
             "orient"  : "[100] [010] [001]",
-            "a"       : d_nbr,
-            "d_plane" : d_nbr
+            "a"       : a,
+            "d_plane" : a
         },
         "bcc_100": {
             "orient"  : "[100] [010] [001]",
-            "a"       : d_nbr * (2/np.sqrt(3)),
-            "d_plane" : d_nbr/np.sqrt(3)
+            "a"       : a,
+            "d_plane" : a/2
         },
         "bcc_110": {
             "orient"  : "[1-10] [001] [110]",
-            "a"       : d_nbr * (2/np.sqrt(3)),
-            "d_plane" : d_nbr * (np.sqrt(2)/np.sqrt(3))
+            "a"       : a,
+            "d_plane" : a/np.sqrt(2)
         },
         "fcc_100": {
             "orient"  : "[100] [010] [001]",
-            "a"       : d_nbr * np.sqrt(2),
-            "d_plane" : d_nbr * (np.sqrt(2)/2)
+            "a"       : a,
+            "d_plane" : a/2
         },
         "fcc_111": {
             "orient"  : "[11-2] [1-10] [111]",
-            "a"       : d_nbr * np.sqrt(2),
-            "d_plane" : d_nbr * (np.sqrt(2)/np.sqrt(3))
+            "a"       : a,
+            "d_plane" : a /np.sqrt(3)
         },
     }
 
@@ -46,11 +46,10 @@ def generate_cells(d_nbr):
 
 # This generates the correct unit cell for a specified element,
 # atomic spacing and lattice type/orientation.
-def generate_unit_cell(input_file, d_nbr, lattice_type, element):
-    cells = generate_cells(d_nbr)
+def generate_unit_cell(input_file, a, lattice_type, element):
+    cells = generate_cells(a)
 
     orient = cells[lattice_type]["orient"].split(' ')
-    a = truncate(cells[lattice_type]["a"], 3)
     d_plane = cells[lattice_type]["d_plane"]
 
     lattice = lattice_type.split('_')[0]
@@ -75,10 +74,12 @@ def generate_unit_cell(input_file, d_nbr, lattice_type, element):
             "-fractional",
             "xsf"]
 
-    subprocess.run(make_unit_cell)
+    subprocess.run(make_unit_cell,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT)
     #subprocess.run(convert_unit_cell_xsf)
 
-    return a, d_plane
+    return d_plane
 
 def generate_supercell(input_file, output_file, d_plane, layers):   
     cut_plane = str((layers - 1)*d_plane + 0.01)
@@ -108,7 +109,9 @@ def generate_supercell(input_file, output_file, d_plane, layers):
             "-ow",
             "xsf"]
 
-    subprocess.run(make_supercell)
+    subprocess.run(make_supercell,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT)
     # convert to an XSF file for visualisation and easy conversion
     # to the relevant file format
     #subprocess.run(convert_supercell_xsf)
@@ -146,7 +149,6 @@ def read_unit_cell(filename, element, constant):
                 atom_pos_start = j + 1
                 print("Positions of atoms start at line: " + str(atom_pos_start))
 
-        # List slicing is exclusive
         a = lines[header_start:(header_start + 3)]
         b = lines[(header_start + 3):(header_start + 6)]
         c = lines[(header_start + 6):(header_start + 9)]
@@ -160,16 +162,16 @@ def read_unit_cell(filename, element, constant):
             lattice_vectors[i].append(str((float(x[1].split('=')[1].strip()))/constant))
             lattice_vectors[i].append(str((float(x[2].split('=')[1].strip()))/constant)) 
 
+        a1 = ', '.join(a1)
+        a2 = ', '.join(a2)
+        a3 = ', '.join(a3)
+
         return a1, a2, a3, coords           
 
 def convert_jams(element, a, input_file, output_file):
     A = 1e-10 # 1 angstrom
     a1, a2, a3, coords = read_unit_cell(input_file, element, a)
-
-    a1 = ', '.join(a1)
-    a2 = ', '.join(a2)
-    a3 = ', '.join(a3)
-    
+   
     # See https://github.com/stonerlab/jams.git for more examples
     # of JAMS' config file format - it uses the libconfig library
     with open(output_file, "w") as f:
@@ -195,10 +197,10 @@ def convert_jams(element, a, input_file, output_file):
         f.close()
         return
 
-def main(element, lattice_type, d_nbr, layers, output_file):   
+def main(element, lattice_type, a, layers, output_file):   
     input_file = lattice_type + "_" + element + ".cfg"
 
-    a, d_plane = generate_unit_cell(input_file, float(d_nbr), lattice_type, element)
+    d_plane = generate_unit_cell(input_file, float(a), lattice_type, element)
     generate_supercell(input_file, output_file, d_plane, int(layers))
     
     input_file = output_file

@@ -1,0 +1,46 @@
+import os
+import numpy as np
+
+#localrules: gen_unitcell, render_cfg
+
+constant=2.5
+
+d_nbrs = {
+    "sc_100": constant,
+    "bcc_100": constant*np.sqrt(3)/2,
+    "bcc_110": constant*np.sqrt(3)/2,
+    "fcc_100": constant/np.sqrt(2),
+    "fcc_111": constant*np.sqrt(3)/np.sqrt(2)
+}
+
+# generate the supercell
+rule gen_unitcell:
+    output:
+        "{lattice}/{layer}/unitcell.cfg"
+    params:
+        element="Fe",
+        lattice=lambda wc: wc.lattice,
+        const=constant,
+        layer=lambda wc: wc.layer,
+    script:
+        "make_unitcells.py" 
+
+# produce the desired JAMS config from a jinja file
+rule render_cfg:
+    input:
+        "JAMS_defaults.jinja2.cfg"
+    output:
+        "{lattice}/{layer}/T={T}K/jams.cfg"
+    params:
+        d_nbr=lambda wc: d_nbrs[wc.lattice]
+    template_engine:
+        "jinja2"
+
+rule calc_magnetisation:
+    input:
+        "{lattice}/{layer}/T={T}K/jams.cfg",
+        "{lattice}/{layer}/unitcell.cfg"
+    output:
+        "{lattice}/{layer}/T={T}K/jams_mag.tsv"
+    shell:
+        "../jams_v2.14.0 --output=\"{wildcards.lattice}/{wildcards.layer}/T={wildcards.T}K\" --name=\"jams\" {input}"

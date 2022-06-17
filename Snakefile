@@ -1,54 +1,30 @@
-from datetime import date
+from snakemake.utils import min_version
+import numpy as np
+import datetime
 
-today = date.today().strftime("%y_%m_%d")
+min_version("7.0.0")
 
-const = 2.5
-elem = "Fe"
-sim_num = 1
+include: "jams.smk"
 
-output_name = "SIM_000" + str(sim_num) + "_WH_" + today
+temperatures = [f'{x:.1f}' for x in range(10, 510, 10)]
+#moment_values = [f'{x:.1f}' for x in [3.0, 5.0, 7.0]]
+thermostat = 'langevin-bose-gpu'
+#repeats = [f'{x:.1f}' for x in np.arange(1,21,1)]
 
+cells = {
+    "sc_100",
+    "bcc_100",
+    "bcc_110",
+    "fcc_100",
+    "fcc_111"
+}
 
-thickness_i = 3
-thickness_f = 10
-layers = range(thickness_i, thickness_f + 1)
+layer_i = 1
+layer_f = 5
 
-T_i = 1
-T_f = 100
-
-temperatures = range(T_i, T_f)
-
-CELLS = ["sc_100",
-         "bcc_100",
-         "bcc_110",
-         "fcc_100",
-         "fcc_111"]
+layers = range(layer_i, layer_f + 1)
 
 rule all:
     input:
-        expand("{cell}_{constant}_{layer}JAMS.cfg", cell=CELLS, constant=const, layer=layers)
-
-# NOTE: The constant passed here is the nearest-neighbour distance
-# between atomic sites - NOT the lattice constant/lattice parameter a.
-# The conversion is done in `atomsk.py`
-rule make_supercell:
-    output:
-        "{cell}_{constant}_{layer}JAMS.cfg"
-    params:
-        element=elem,
-        cell=lambda wc: wc.cell,
-        constant=lambda wc: wc.constant,
-        layer=lambda wc: wc.layer
-    script:
-        "make_unitcells.py"
-
-rule calculate_magnetisation:
-    input:
-        "{cell}_{constant}_{layer}JAMS.cfg"
-    output:
-        output_name + "/" + output_name + "_mag.tsv"
-    params:
-        folder=output[0].split('_')
-    shell:
-        "../jams {input} --output {output}"
-
+        expand("{lattice}/{layer}/T={T}K/jams_mag.tsv",
+            lattice=cells, layer=layers, T=temperatures)

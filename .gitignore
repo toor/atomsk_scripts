@@ -2,4 +2,7 @@
 sc_*.cfg
 bcc_*.cfg
 fcc_*.cfg
-snakemake/
+/.snakemake/
+bcc_*/
+fcc_*/
+sc_*/
