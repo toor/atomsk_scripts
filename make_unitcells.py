@@ -131,14 +131,19 @@ def read_unit_cell(filename, element):
             lines[header_start].strip(" \t\n\r"))]
         b = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
             lines[header_start+1].strip(" \t\n\r"))]
-        c = [round(float(i), 2 for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        c = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
             lines[header_start+2].strip(" \t\n\r"))]
+        a = [str(i) for i in a]
+        b = [str(i) for i in b]
+        c = [str(i) for i in c]
 
         positions = lines[atom_pos_start:len(lines)]
         for pos in positions:
             # remove first element since it's just the atomic number of
             # whatever element we choose to fill with
-            coords.append([float(i) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos))
+            coord = [round(float(i),2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos)[1:]]
+            coord = [str(i) for i in coord]
+            coords.append(coord)
         a = ', '.join(a)
         b = ', '.join(b)
         c = ', '.join(c)
