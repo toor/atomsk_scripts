@@ -37,11 +37,12 @@ rule render_cfg:
     template_engine:
         "jinja2"
 
-#rule calc_magnetisation:
-#    input:
-#        "{lattice}/{layer}/{T}K/jams.cfg",
-#        "{lattice}/{layer}/unitcell.cfg"
-#    output:
-#        "{lattice}/{layer}/{T}K/jams_mag.tsv"
-#    shell:
-#        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input}"
+rule calc_magnetisation:
+    input:
+        "{lattice}/{layer}/{T}K/jams.cfg",
+        "{lattice}/{layer}/unitcell.cfg"
+    output:
+        "{lattice}/{layer}/{T}K/jams_mag.tsv"
+    shell:
+        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input}"
+

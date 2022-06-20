@@ -76,7 +76,7 @@ def generate_unit_cell(input_file, a, lattice_type, element):
 def generate_supercell(input_file, output_file, d_plane, layers):   
     print("Generating a supercell with " + str(layers) + " layers from input " + input_file)
     print("Supercell name: " + output_file)
-    cut_plane = str((layers - 1)*d_plane + 0.05)
+    cut_plane = str((layers - 1)*d_plane + 0.01)
     cell_z = str((layers - 1)*d_plane)
 
     make_supercell = ["atomsk",
@@ -120,24 +120,22 @@ def read_unit_cell(filename, element):
             # header_start has been updated yet. This if statement
             # should only be entered if the latter is zero.
             # Lattice vectors are guaranteed to always appear directly after
-            # the definition of the Angstrom
+            # the definition of the Angstrom.
             if lines[j].strip() == "CRYSTAL":
-                # Lattice vectors appear directly after the declaration of the
-                # Angstrom unit.
                 header_start = j + 2
             if lines[j].strip() == "PRIMCOORD":
-                atom_pos_start = j + 1
+                atom_pos_start = j + 2
                 print("Positions of atoms start at line: " + str(atom_pos_start))
 
-        a = lines[header_start].strip(" \t\n\r")
-        b = lines[header_start + 1].strip(" \t\n\r")
-        c = lines[header_start + 2].strip(" \t\n\r")
+        a = lines[header_start].strip(" \t\n\r").split(separator)
+        b = lines[header_start + 1].strip(" \t\n\r").split(separator)
+        c = lines[header_start + 2].strip(" \t\n\r").split(separator)
        
         positions = lines[atom_pos_start:len(lines)]
         for pos in positions:
             # remove first element since it's just the atomic number of
             # whatever element we choose to fill with
-            coords.append(pos.strip(' \t\n\r').split(separator)[1:3])
+            coords.append(pos.strip(' \t\n\r').split(separator)[1:])
 
         a = ', '.join(a)
         b = ', '.join(b)
@@ -170,7 +168,7 @@ def convert_jams(element, a, input_file, output_file):
                 f.write(");\n")
             else:
                 f.write(",\n")
-        f.write("  coordinate_format = \"cartesian\";")
+        f.write("  coordinate_format = \"cartesian\";\n")
         f.write("};\n")
         f.close()
 
@@ -185,6 +183,8 @@ def main(element, lattice_type, a, layers, ak_out, jams_out):
     convert_jams(element, a, ak_out, jams_out)
 
     return
+
+#main("Fe", "fcc_111", "2.5", "2", "supercell.xsf", "unitcell.cfg")
 
 main(snakemake.params[0],
     snakemake.params[1],

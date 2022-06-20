@@ -19,8 +19,8 @@ cells = {
     "fcc_111"
 }
 
-layer_i = 1
-layer_f = 5
+layer_i = 2
+layer_f = 6
 
 layers = range(layer_i, layer_f + 1)
 
