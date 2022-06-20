@@ -127,16 +127,18 @@ def read_unit_cell(filename, element):
                 atom_pos_start = j + 2
                 print("Positions of atoms start at line: " + str(atom_pos_start))
 
-        a = lines[header_start].strip(" \t\n\r").split(separator)
-        b = lines[header_start + 1].strip(" \t\n\r").split(separator)
-        c = lines[header_start + 2].strip(" \t\n\r").split(separator)
-       
+        a = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+            lines[header_start].strip(" \t\n\r"))]
+        b = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+            lines[header_start+1].strip(" \t\n\r"))]
+        c = [round(float(i), 2 for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+            lines[header_start+2].strip(" \t\n\r"))]
+
         positions = lines[atom_pos_start:len(lines)]
         for pos in positions:
             # remove first element since it's just the atomic number of
             # whatever element we choose to fill with
-            coords.append(pos.strip(' \t\n\r').split(separator)[1:])
-
+            coords.append([float(i) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos))
         a = ', '.join(a)
         b = ', '.join(b)
         c = ', '.join(c)
@@ -184,11 +186,11 @@ def main(element, lattice_type, a, layers, ak_out, jams_out):
 
     return
 
-#main("Fe", "fcc_111", "2.5", "2", "supercell.xsf", "unitcell.cfg")
+main("Fe", "fcc_111", "2.5", "2", "supercell.xsf", "unitcell.cfg")
 
-main(snakemake.params[0],
-    snakemake.params[1],
-    snakemake.params[2],
-    snakemake.params[3],
-    snakemake.output[0],
-    snakemake.output[1])
+#main(snakemake.params[0],
+#    snakemake.params[1],
+#    snakemake.params[2],
+#    snakemake.params[3],
+#    snakemake.output[0],
+#    snakemake.output[1])
