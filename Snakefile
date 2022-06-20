@@ -26,5 +26,5 @@ layers = range(layer_i, layer_f + 1)
 
 rule all:
     input:
-        expand("{lattice}/{layer}/T={T}K/jams_mag.tsv",
+        expand("{lattice}/{layer}/{T}K/jams_mag.tsv",
             lattice=cells, layer=layers, T=temperatures)

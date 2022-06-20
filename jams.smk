@@ -16,6 +16,7 @@ d_nbrs = {
 # generate the supercell
 rule gen_unitcell:
     output:
+        "{lattice}/{layer}/supercell.xsf",
         "{lattice}/{layer}/unitcell.cfg"
     params:
         element="Fe",
@@ -30,17 +31,17 @@ rule render_cfg:
     input:
         "JAMS_defaults.jinja2.cfg"
     output:
-        "{lattice}/{layer}/T={T}K/jams.cfg"
+        "{lattice}/{layer}/{T}K/jams.cfg"
     params:
         d_nbr=lambda wc: d_nbrs[wc.lattice]
     template_engine:
         "jinja2"
 
-rule calc_magnetisation:
-    input:
-        "{lattice}/{layer}/T={T}K/jams.cfg",
-        "{lattice}/{layer}/unitcell.cfg"
-    output:
-        "{lattice}/{layer}/T={T}K/jams_mag.tsv"
-    shell:
-        "../jams_v2.14.0 --output=\"{wildcards.lattice}/{wildcards.layer}/T={wildcards.T}K\" --name=\"jams\" {input}"
+#rule calc_magnetisation:
+#    input:
+#        "{lattice}/{layer}/{T}K/jams.cfg",
+#        "{lattice}/{layer}/unitcell.cfg"
+#    output:
+#        "{lattice}/{layer}/{T}K/jams_mag.tsv"
+#    shell:
+#        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input}"

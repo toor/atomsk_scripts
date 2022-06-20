@@ -6,3 +6,6 @@ fcc_*.cfg
 bcc_*/
 fcc_*/
 sc_*/
+*.e*
+*.o*
+jams.cuda_job.sh

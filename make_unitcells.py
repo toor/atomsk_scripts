@@ -63,18 +63,9 @@ def generate_unit_cell(input_file, a, lattice_type, element):
             orient[0],
             orient[1],
             orient[2],
-            "-fractional",
             "-ow",
             input_file,
-            "cfg"]
-    # convert to XCrysDen XSF format for easy conversion
-    # to JAMS
-    convert_unit_cell_xsf = ["atomsk",
-            input_file,
-            "-ow",
-            "-fractional",
             "xsf"]
-
     subprocess.run(make_unit_cell,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT)
@@ -85,7 +76,7 @@ def generate_unit_cell(input_file, a, lattice_type, element):
 def generate_supercell(input_file, output_file, d_plane, layers):   
     print("Generating a supercell with " + str(layers) + " layers from input " + input_file)
     print("Supercell name: " + output_file)
-    cut_plane = str((layers - 1)*d_plane + 0.01)
+    cut_plane = str((layers - 1)*d_plane + 0.05)
     cell_z = str((layers - 1)*d_plane)
 
     make_supercell = ["atomsk",
@@ -98,20 +89,10 @@ def generate_supercell(input_file, output_file, d_plane, layers):
             "above",
             cut_plane,
             "z",
-            "-fractional",
             "-ow",
             output_file,
-            "cfg"]
+            "xsf"]
 
-    cut_layers = ["atomsk",
-            output_file,
-            "-cut",
-            "above",
-            cut_plane,
-            "z",
-            "-ow",
-            output_file, 
-            "cfg"]
     print("before supercell")
     subprocess.run(make_supercell,
             stdout=subprocess.DEVNULL,
@@ -120,15 +101,12 @@ def generate_supercell(input_file, output_file, d_plane, layers):
     #subprocess.run(cut_layers,
             #stdout=subprocess.DEVNULL,
             #stderr=subprocess.STDOUT)
-    print("ran cut_layers")
     return
 
-def read_unit_cell(filename, element, constant):   
-    a1 = []
-    a2 = []
-    a3 = []
-    lattice_vectors = [a1, a2, a3]
+def read_unit_cell(filename, element): 
     coords = []
+
+    separator = '        '
 
     # this function should read the correct parameters for a unit cell
     with open(filename) as f:
@@ -143,45 +121,38 @@ def read_unit_cell(filename, element, constant):
             # should only be entered if the latter is zero.
             # Lattice vectors are guaranteed to always appear directly after
             # the definition of the Angstrom
-            cond1 = re.search("A = ", lines[j]) 
-            #cond2 = re.search("#", lines[j])
-            if bool(cond1) and (not header_start):
+            if lines[j].strip() == "CRYSTAL":
                 # Lattice vectors appear directly after the declaration of the
                 # Angstrom unit.
-                header_start = j + 1
-            # same spiel here - the second condition is not strictly
-            # necessary
-            if (lines[j].strip() == element) and not atom_pos_start:
+                header_start = j + 2
+            if lines[j].strip() == "PRIMCOORD":
                 atom_pos_start = j + 1
                 print("Positions of atoms start at line: " + str(atom_pos_start))
 
-        a = lines[header_start:(header_start + 3)]
-        b = lines[(header_start + 3):(header_start + 6)]
-        c = lines[(header_start + 6):(header_start + 9)]
+        a = lines[header_start].strip(" \t\n\r")
+        b = lines[header_start + 1].strip(" \t\n\r")
+        c = lines[header_start + 2].strip(" \t\n\r")
        
         positions = lines[atom_pos_start:len(lines)]
         for pos in positions:
-            coords.append(pos.strip('\t\n\r').split('    '))
+            # remove first element since it's just the atomic number of
+            # whatever element we choose to fill with
+            coords.append(pos.strip(' \t\n\r').split(separator)[1:3])
 
-        for i, x in enumerate([a, b, c]):
-            lattice_vectors[i].append(str((float(x[0].split('=')[1].strip()))/constant))
-            lattice_vectors[i].append(str((float(x[1].split('=')[1].strip()))/constant))
-            lattice_vectors[i].append(str((float(x[2].split('=')[1].strip()))/constant)) 
+        a = ', '.join(a)
+        b = ', '.join(b)
+        c = ', '.join(c)
 
-        a1 = ', '.join(a1)
-        a2 = ', '.join(a2)
-        a3 = ', '.join(a3)
-
-        return a1, a2, a3, coords           
+        return a, b, c, coords           
 
 def convert_jams(element, a, input_file, output_file):
     A = 1e-10 # 1 angstrom
-    a1, a2, a3, coords = read_unit_cell(input_file, element, a)
+    a1, a2, a3, coords = read_unit_cell(input_file, element)
    
     # See https://github.com/stonerlab/jams.git for more examples
     # of JAMS' config file format - it uses the libconfig library
     with open(output_file, "w") as f:
-        f.write("unitcell = {\n")
+        f.write("unitcell: {\n")
         f.write("  parameter = " + str(float(a)*A) + ";\n")
         f.write("\n")
         f.write("  basis = (\n")
@@ -194,23 +165,24 @@ def convert_jams(element, a, input_file, output_file):
         atom_count = len(coords)
         for j in range(0, (atom_count)):
             coord = ', '.join(coords[j])
-            f.write("    (\"" + element + "\", [" + str(coord) + "])")
+            f.write("    (\"" + element + "\", [" + coord + "])")
             if j==(atom_count - 1):
                 f.write(");\n")
             else:
                 f.write(",\n")
+        f.write("  coordinate_format = \"cartesian\";")
         f.write("};\n")
         f.close()
 
         return
 
-def main(element, lattice_type, a, layers, output_file1, output_file2):   
-    input_file = lattice_type + "_" + element + ".cfg"
+def main(element, lattice_type, a, layers, ak_out, jams_out):   
+    input_file = lattice_type + "_" + element + ".xsf"
 
     d_plane = generate_unit_cell(input_file, float(a), lattice_type, element)
-    generate_supercell(input_file, output_file1, d_plane, int(layers))
+    generate_supercell(input_file, ak_out, d_plane, int(layers))
 
-    convert_jams(element, a, output_file1, output_file2)
+    convert_jams(element, a, ak_out, jams_out)
 
     return
 
