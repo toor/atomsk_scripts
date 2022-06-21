@@ -18,19 +18,16 @@ def plot_mag_vs_timesteps(filename):
 
 def plot_mag_vs_temperature(lattice_type):
     # list of paths to layers
-    (path, layers, files) = os.walk(lattice_type)
-    for layer in layers:
-        print(layer)
-        (path, temperatures, files) = os.walk(layer)
-        for T in temperatures:
-            # strip Kelvin suffix
-            temp = float(T.strip("K"))
+    for (path, layers, files) in os.walk(lattice_type):
+        print("path = " + path)
+        for layer in layers:
+            print("layer =" + layer)
+            for (path, temperatures, files) in os.walk(layer):
+                for temperature in temperatures:
+                    T = float(temperature.split("K"))
 
-            filename = lattice_type + "/" + layer + "/" + T + "/jams_mag.tsv"
-            
-            # TODO slice data after equilibration
-            data = pd.read_csv(filename, sep=r"[ \t]+")['Fe_mz']
+                    filename = lattice_type
 
-            return
+                    return
 
 plot_mag_vs_temperature("fcc_111")
