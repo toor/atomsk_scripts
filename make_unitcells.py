@@ -93,25 +93,19 @@ def generate_supercell(input_file, output_file, d_plane, layers):
             output_file,
             "xsf"]
 
-    print("before supercell")
     subprocess.run(make_supercell,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT)
-    print("ran supercell")
-    #subprocess.run(cut_layers,
-            #stdout=subprocess.DEVNULL,
-            #stderr=subprocess.STDOUT)
+           #stderr=subprocess.STDOUT)
     return
 
 def read_unit_cell(filename, element): 
-    coords = []
-
     separator = '        '
 
     # this function should read the correct parameters for a unit cell
     with open(filename) as f:
-        lines = [line for line in f]
-
+        lines = np.array([line for line in f])
+    
         header_start = 0
         atom_pos_start = 0
 
@@ -126,24 +120,25 @@ def read_unit_cell(filename, element):
             if lines[j].strip() == "PRIMCOORD":
                 atom_pos_start = j + 2
                 print("Positions of atoms start at line: " + str(atom_pos_start))
+    
+        coords = np.zeros(((len(lines) - atom_pos_start), 3))
 
-        a = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        a = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
             lines[header_start].strip(" \t\n\r"))]
-        b = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        b = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
             lines[header_start+1].strip(" \t\n\r"))]
-        c = [round(float(i), 2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        c = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
             lines[header_start+2].strip(" \t\n\r"))]
         a = [str(i) for i in a]
         b = [str(i) for i in b]
         c = [str(i) for i in c]
 
         positions = lines[atom_pos_start:len(lines)]
-        for pos in positions:
+        for j, pos in positions:
             # remove first element since it's just the atomic number of
             # whatever element we choose to fill with
-            coord = [round(float(i),2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos)[1:]]
-            coord = [str(i) for i in coord]
-            coords.append(coord)
+            coord = np.array([round(float(i),2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos)[1:]])
+            coords[j] = [str(i) for i in coord]
         a = ', '.join(a)
         b = ', '.join(b)
         c = ', '.join(c)
@@ -190,8 +185,6 @@ def main(element, lattice_type, a, layers, ak_out, jams_out):
     convert_jams(element, a, ak_out, jams_out)
 
     return
-
-#main("Fe", "fcc_111", "2.5", "2", "supercell.xsf", "unitcell.cfg")
 
 main(snakemake.params[0],
     snakemake.params[1],

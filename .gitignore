@@ -9,3 +9,5 @@ sc_*/
 *.e*
 *.o*
 jams.cuda_job.sh
+*.txt
+tree_all.sh
