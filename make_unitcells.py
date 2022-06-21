@@ -191,11 +191,11 @@ def main(element, lattice_type, a, layers, ak_out, jams_out):
 
     return
 
-main("Fe", "fcc_111", "2.5", "2", "supercell.xsf", "unitcell.cfg")
+#main("Fe", "fcc_111", "2.5", "2", "supercell.xsf", "unitcell.cfg")
 
-#main(snakemake.params[0],
-#    snakemake.params[1],
-#    snakemake.params[2],
-#    snakemake.params[3],
-#    snakemake.output[0],
-#    snakemake.output[1])
+main(snakemake.params[0],
+    snakemake.params[1],
+    snakemake.params[2],
+    snakemake.params[3],
+    snakemake.output[0],
+    snakemake.output[1])
