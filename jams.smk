@@ -1,7 +1,7 @@
 import os
 import numpy as np
 
-#localrules: gen_unitcell, render_cfg
+localrules: gen_unitcell, render_cfg, analyse_magnetisation, plot_magnetisation
 
 constant=2.5
 
@@ -46,3 +46,20 @@ rule calc_magnetisation:
     shell:
         "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input}"
 
+rule analyse_magnetisation:
+    input:
+        "{lattice}/{layer}/{T}K/jams_mag.tsv"
+    output:
+        "{lattice}/{layer}/mag_vs_temp.dat"
+    params:
+        temp=lambda wc: wc.T
+    script:
+        "process_mag_data.py"
+
+rule plot_magnetisation:
+    input:
+        "{lattice}/{layer}/mag_vs_temp.dat"
+    output:
+        "{lattice}/{layer}/mag_vs_temp.png"
+    script:
+        "plot_mag_data.py"

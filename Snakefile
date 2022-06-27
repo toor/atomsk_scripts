@@ -20,7 +20,7 @@ cells = {
 }
 
 layer_i = 2
-layer_f = 6
+layer_f = 10
 
 layers = range(layer_i, layer_f + 1)
 
