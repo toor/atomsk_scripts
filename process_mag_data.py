@@ -8,16 +8,18 @@ import re
 # use 4 space delimiter
 sep = '    '
 
-input_file = snakemake.input
-output_file = snakemake.output
-temperature = snakemake.params.get("temp")
+#output_file = snakemake.output
+lattice = snakemake.params[0]
+layers = snakemake.params[1]
+temp = snakemake.params[2]
 
-mag_data = np.genfromtxt(input_file, skip_header=1, usecols=8)
-mag_data = mag_data[200:mag_data.size]
-
-mag = np.mean(mag_data)
+output_file = lattice + "/" + str(layers) + "mag_vs_temp.dat"
 
 with open(output_file, 'a') as f:
-    w_str = str(temperature) + sep + str(mag)
+    mag_data = np.genfromtxt(input_file, skip_header=1, usecols=8)
+    mag = np.mean(mag_data[200:(mag_data.size - 1)])
+
+    w_str = str(temp) + sep + str(mag)
+
     f.write(w_str)
     f.close()

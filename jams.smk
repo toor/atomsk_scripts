@@ -13,6 +13,18 @@ d_nbrs = {
     "fcc_111": constant*np.sqrt(3)/np.sqrt(2)
 }
 
+temperatures = [f'{x:.1f}' for x in range(10, 210, 10)]
+
+cells = {
+    "sc_100"
+    #"bcc_100",
+    #"bcc_110",
+    #"fcc_100",
+    #"fcc_111"
+}
+
+layers = range(2, 6)
+
 # generate the supercell
 rule gen_unitcell:
     output:
@@ -48,11 +60,13 @@ rule calc_magnetisation:
 
 rule analyse_magnetisation:
     input:
-        "{lattice}/{layer}/{T}K/jams_mag.tsv"
+        expand("{lattice}/{layer}/{T}K/jams_mag.tsv", lattice=cells, layer=layers, T=temperatures)
     output:
         "{lattice}/{layer}/mag_vs_temp.dat"
     params:
-        temp=lambda wc: wc.T
+        lattice=lambda wc: wc.lattice,
+        layer=lambda wc: wc.layer,
+        T=lambda wc: wc.T
     script:
         "process_mag_data.py"
 

@@ -1,0 +1,9 @@
+__default__:
+  time: "48:0:0"
+  join: no
+  coproc_v100: 1
+
+__resources__:
+    coproc_v100: 
+        - "gpu"
+        - "nvidia_gpu"

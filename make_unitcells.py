@@ -121,7 +121,7 @@ def read_unit_cell(filename, element):
                 atom_pos_start = j + 2
                 print("Positions of atoms start at line: " + str(atom_pos_start))
     
-        coords = np.zeros(((len(lines) - atom_pos_start), 3))
+        coords = []
 
         a = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
             lines[header_start].strip(" \t\n\r"))]
@@ -134,11 +134,11 @@ def read_unit_cell(filename, element):
         c = [str(i) for i in c]
 
         positions = lines[atom_pos_start:len(lines)]
-        for j, pos in positions:
+        for j, pos in enumerate(positions):
             # remove first element since it's just the atomic number of
             # whatever element we choose to fill with
-            coord = np.array([round(float(i),2) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos)[1:]])
-            coords[j] = [str(i) for i in coord]
+            coord = [str(round(float(i),2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos)[1:]]
+            coords.append(coord)
         a = ', '.join(a)
         b = ', '.join(b)
         c = ', '.join(c)
