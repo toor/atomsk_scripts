@@ -6,17 +6,14 @@ min_version("7.0.0")
 
 include: "jams.smk"
 
-temperatures = [f'{x:.1f}' for x in range(10, 210, 10)]
-#moment_values = [f'{x:.1f}' for x in [3.0, 5.0, 7.0]]
-thermostat = 'langevin-bose-gpu'
-#repeats = [f'{x:.1f}' for x in np.arange(1,21,1)]
+temperatures = [f'{x:.1f}' for x in range(10, 410, 10)]
 
 cells = {
-    "sc_100"
-    #"bcc_100",
-    #"bcc_110",
-    #"fcc_100",
-    #"fcc_111"
+    "sc_100",
+    "bcc_100",
+    "bcc_110",
+    "fcc_100",
+    "fcc_111"
 }
 
 layer_i = 2

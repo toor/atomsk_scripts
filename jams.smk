@@ -13,17 +13,23 @@ d_nbrs = {
     "fcc_111": constant*np.sqrt(3)/np.sqrt(2)
 }
 
-temperatures = [f'{x:.1f}' for x in range(10, 210, 10)]
+temperatures = [f'{x:.1f}' for x in range(10, 410, 10)]
 
 cells = {
-    "sc_100"
-    #"bcc_100",
-    #"bcc_110",
-    #"fcc_100",
-    #"fcc_111"
+    "sc_100",
+    "bcc_100",
+    "bcc_110",
+    "fcc_100",
+    "fcc_111"
 }
 
 layers = range(2, 6)
+
+# applied field in Tesla
+app_field = 0.1
+# Number of times to repeat the unit cell in-plane
+repeats=32
+
 
 # generate the supercell
 rule gen_unitcell:
@@ -45,7 +51,9 @@ rule render_cfg:
     output:
         "{lattice}/{layer}/{T}K/jams.cfg"
     params:
-        d_nbr=lambda wc: d_nbrs[wc.lattice]
+        d_nbr=lambda wc: d_nbrs[wc.lattice],
+        field=app_field,
+        rep=repeats
     template_engine:
         "jinja2"
 
@@ -63,6 +71,12 @@ rule analyse_magnetisation:
         expand("{{lattice}}/{{layer}}/{T}K/jams_mag.tsv", T=temperatures)
     output:
         "{lattice}/{layer}/mag_vs_temp.dat"
+    params:
+        lattice=lambda wc: wc.lattice,
+        layer=lambda wc: wc.layer,
+        const=constant,
+        field=app_field,
+        rep=repeats
     script:
         "process_mag_data.py"
 
