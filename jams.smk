@@ -60,13 +60,9 @@ rule calc_magnetisation:
 
 rule analyse_magnetisation:
     input:
-        expand("{lattice}/{layer}/{T}K/jams_mag.tsv", lattice=cells, layer=layers, T=temperatures)
+        expand("{{lattice}}/{{layer}}/{T}K/jams_mag.tsv", T=temperatures)
     output:
         "{lattice}/{layer}/mag_vs_temp.dat"
-    params:
-        lattice=lambda wc: wc.lattice,
-        layer=lambda wc: wc.layer,
-        T=lambda wc: wc.T
     script:
         "process_mag_data.py"
 
