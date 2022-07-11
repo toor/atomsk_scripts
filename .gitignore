@@ -12,3 +12,4 @@ jams.cuda_job.sh
 *.txt
 tree_all.sh
 *.tsv
+figures/*
