@@ -38,7 +38,7 @@ def generate_cells(a):
         "fcc_111": {
             "orient"  : "[11-2] [1-10] [111]",
             "a"       : a,
-            "d_plane" : a /np.sqrt(3)
+            "d_plane" : a/np.sqrt(3)
         },
     }
 
@@ -64,13 +64,12 @@ def generate_unit_cell(input_file, a, lattice_type, element):
             orient[1],
             orient[2],
             "-ow",
+            "-fractional",
             input_file,
-            "xsf"]
+            "cfg"]
     subprocess.run(make_unit_cell,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT)
-    #subprocess.run(convert_unit_cell_xsf)
-
     return d_plane
 
 def generate_supercell(input_file, output_file, d_plane, layers):   
@@ -91,7 +90,7 @@ def generate_supercell(input_file, output_file, d_plane, layers):
             "z",
             "-ow",
             output_file,
-            "xsf"]
+            "cfg"]
 
     subprocess.run(make_supercell,
             stdout=subprocess.DEVNULL,
@@ -99,7 +98,7 @@ def generate_supercell(input_file, output_file, d_plane, layers):
            #stderr=subprocess.STDOUT)
     return
 
-def read_unit_cell(filename, element): 
+def read_unit_cell(filename, element, constant): 
     separator = '        '
 
     # this function should read the correct parameters for a unit cell
@@ -108,37 +107,49 @@ def read_unit_cell(filename, element):
     
         header_start = 0
         atom_pos_start = 0
-
+        
         for j in range(0, len(lines)):
+            cond1 = re.search("A = ", lines[j])
+            if bool(cond1) and not header_start:
+                header_start = j + 1
+            if (lines[j].strip() == element) and not atom_pos_start:
+                atom_pos_start = j + 1
+        
+        a = [round(float(comp.split('=')[1])/constant, 3) for comp in lines[header_start:(header_start + 3)]]
+        b = [round(float(comp.split('=')[1])/constant, 3) for comp in lines[(header_start + 3):(header_start + 6)]]
+        c = [round(float(comp.split('=')[1])/constant, 3) for comp in lines[(header_start + 6):(header_start + 9)]] 
+        
+        #for j in range(0, len(lines)):
             # check if line contains equals sign and whether
             # header_start has been updated yet. This if statement
             # should only be entered if the latter is zero.
             # Lattice vectors are guaranteed to always appear directly after
             # the definition of the Angstrom.
-            if lines[j].strip() == "CRYSTAL":
-                header_start = j + 2
-            if lines[j].strip() == "PRIMCOORD":
-                atom_pos_start = j + 2
-                print("Positions of atoms start at line: " + str(atom_pos_start))
-    
+            #if lines[j].strip() == "CRYSTAL":
+            #    header_start = j + 2
+            #if lines[j].strip() == "PRIMCOORD":
+            #    atom_pos_start = j + 2
+            #    print("Positions of atoms start at line: " + str(atom_pos_start))
+        
         coords = []
 
-        a = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
-            lines[header_start].strip(" \t\n\r"))]
-        b = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
-            lines[header_start+1].strip(" \t\n\r"))]
-        c = [str(round(float(i), 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
-            lines[header_start+2].strip(" \t\n\r"))]
+        #a = [str(round(float(i)/constant, 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        #    lines[header_start].strip(" \t\n\r"))]
+        #b = [str(round(float(i)/constant, 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        #    lines[header_start+1].strip(" \t\n\r"))]
+        #c = [str(round(float(i)/constant, 2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)",
+        #    lines[header_start+2].strip(" \t\n\r"))]
         a = [str(i) for i in a]
         b = [str(i) for i in b]
         c = [str(i) for i in c]
 
-        positions = lines[atom_pos_start:len(lines)]
-        for j, pos in enumerate(positions):
-            # remove first element since it's just the atomic number of
-            # whatever element we choose to fill with
-            coord = [str(round(float(i),2)) for i in re.findall(r"[-+]?(?:\d*\.\d+|\d+)", pos)[1:]]
+        positions = lines[atom_pos_start:]
+        
+        for pos in positions:
+            # simply split by any and all whitespace
+            coord = pos.split()
             coords.append(coord)
+
         a = ', '.join(a)
         b = ', '.join(b)
         c = ', '.join(c)
@@ -147,7 +158,7 @@ def read_unit_cell(filename, element):
 
 def convert_jams(element, a, input_file, output_file):
     A = 1e-10 # 1 angstrom
-    a1, a2, a3, coords = read_unit_cell(input_file, element)
+    a1, a2, a3, coords = read_unit_cell(input_file, element, float(a))
    
     # See https://github.com/stonerlab/jams.git for more examples
     # of JAMS' config file format - it uses the libconfig library
@@ -170,7 +181,7 @@ def convert_jams(element, a, input_file, output_file):
                 f.write(");\n")
             else:
                 f.write(",\n")
-        f.write("  coordinate_format = \"cartesian\";\n")
+        #f.write("  coordinate_format = \"cartesian\";\n")
         f.write("};\n")
         f.close()
 
