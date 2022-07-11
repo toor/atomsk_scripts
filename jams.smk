@@ -13,8 +13,8 @@ d_nbrs = {
     "fcc_111": (constant*np.sqrt(3))/np.sqrt(2)
 }
 
-#temperatures = [f'{x:.1f}' for x in range(10, 410, 10)]
-temperatures = [50.0, 100.0, 200.0, 300.0, 400.0]
+temperatures = [f'{x:.1f}' for x in range(25, 550, 25)]
+#temperatures = [50.0, 100.0, 200.0, 300.0, 400.0]
 
 
 cells = {
@@ -25,15 +25,15 @@ cells = {
     #"fcc_111"
 }
 
-#layers = range(2, 6)
+layers = range(2, 6)
 
 # applied field in Tesla
 app_field = 0.1
 # Number of times to repeat the unit cell in-plane
 repeats=32
 
-layers = 3
-temp = 50.0
+#layers = 3
+#temp = 50.0
 
 
 # generate the supercell
@@ -113,7 +113,7 @@ rule calculate_thermodynamics:
     output:
         "{lattice}/{layer}/{T}K/jams_mag.tsv"
     shell:
-        "../jams-v2.14.0+1.9ca4fcdb --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' " 
+        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' " 
     
 rule calculate_magnon_spectrum:
     input:
@@ -123,14 +123,15 @@ rule calculate_magnon_spectrum:
     output:
         "{lattice}/{layer}/{T}K/jams_magnon_spectrum_path_0.tsv"
     shell:
-        "../jams-v2.14.0+1.9ca4fcdb --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams_magnon\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' "
+        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams_magnon\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' "
  
 
 rule analyse_magnetisation:
     input:
-        expand("{{lattice}}/{{layer}}/{T}K/jams_mag.tsv", T=temp)
+        expand("{{lattice}}/{{layer}}/{T}K/jams_mag.tsv", T=temperatures)
     output:
-        "{lattice}/{layer}/mag_vs_temp.dat"
+        "{lattice}/{layer}/mag_vs_temp.dat",
+        "{lattice}/{layer}/sus_vs_temp.dat"
     params:
         lattice=lambda wc: wc.lattice,
         layer=lambda wc: wc.layer,
@@ -142,9 +143,11 @@ rule analyse_magnetisation:
 
 rule plot_magnetisation:
     input:
-        "{lattice}/{layer}/mag_vs_temp.dat"
+        "{lattice}/{layer}/mag_vs_temp.dat",
+        "{lattice}/{layer}/sus_vs_temp.dat"
     output:
-        "{lattice}/{layer}/mag_vs_temp.png"
+        "{lattice}/{layer}/mag_vs_temp.png",
+        "{lattice}/{layer}/sus_vs_temp.png"
     script:
         "plot_mag_data.py"
 

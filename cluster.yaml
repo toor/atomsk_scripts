@@ -1,5 +1,5 @@
 __default__:
-  time: "0:15:0"
+  time: "0:30:0"
   join: no
   coproc_v100: 1
 

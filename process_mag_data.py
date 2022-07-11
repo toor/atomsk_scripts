@@ -14,7 +14,9 @@ TEMP_REGEX = r'[+-]?([0-9]*[.])[0-9]+'
 sep = '\t'
 
 in_files = snakemake.input
-out_file = snakemake.output
+mag_out_file = snakemake.output[0]
+sus_out_file = snakemake.output[1]
+
 
 lattice = snakemake.params[0]
 layer = int(snakemake.params[1])
@@ -51,7 +53,7 @@ def bloch(T):
     # TODO make all of these parameters in the Snakefile, to also pass to e.g. jinja
     # Exchange
     J = 2e-21
-    S = 0.5
+    S = 1.25
     # Spinwave stiffness
     D = 2*J*S*(constant**2)
 
@@ -69,20 +71,34 @@ def bloch(T):
 
     return m_z
 
-with open(str(out_file), 'a') as f:
-    for in_file in in_files:
-        # Skip the first 200 steps as equilibration. TODO: Use pymbar.
-        mag_data = np.genfromtxt(in_file, skip_header=1, usecols=7)
-        [t0, g, N_eff] = timeseries.detectEquilibration(mag_data)
-        mag_data = mag_data[t0:]
-        
-        mag = np.mean(np.abs(mag_data))
-
-        m = re.search(TEMP_REGEX, in_file)
-        temp = float(in_file[m.start():m.end()])
-        mag_bloch = bloch(temp)
-        diff = np.abs(mag - mag_bloch)
-
-        w = str(temp) + sep + str(round(mag, 3)) + sep + str(mag_bloch) + sep + str(diff) + "\n"
-        f.write(w)
+with open(mag_out_file) as f:
+    w_str = "T" + sep + "M_z" + sep + "M" + sep + "M_bloch" + "\n"
+    f.write(w_str)
     f.close()
+with open(sus_out_file) as f:
+    w_str = "T" + sep + "Sus" + "\n"
+
+for in_file in in_files:
+    # Use all of the magnetisation data, since we start from a thermalised state
+    m_z_data = np.genfromtxt(in_file, skip_header=1, usecols=7)
+    m_data = np.genfromtxt(in_file, skip_header=1, usecols=8)
+
+    m_z = np.mean(m_z_data)
+    mag = np.mean(m_data)
+    sus = np.var(m_data) - mag**2
+
+    m = re.search(TEMP_REGEX, in_file)
+    temp = float(in_file[m.start():m.end()])
+    mag_bloch = bloch(temp)
+    diff = np.abs(mag - mag_bloch)
+
+    mag_str = str(temp) + sep + str(round(m_z, 3)) + sep + str(round(mag, 3)) + sep + str(round(mag_bloch, 3)) + "\n"
+    sus_str = str(temp) + sep + str(round(sus, 3)) + "\n"
+
+    with open(str(mag_out_file)) as f:
+        f.write(mag_str)
+        f.close()
+    with open(str(sus_out_file)) as f:
+        f.write(sus_str)
+        f.close()
+

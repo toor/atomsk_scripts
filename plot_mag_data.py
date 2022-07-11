@@ -3,31 +3,41 @@ import matplotlib.pyplot as plt
 
 sep = '\t'
 
-input_file = str(snakemake.input)
-output_file = str(snakemake.output)
+mag_input_file = str(snakemake.input[0])
+sus_input_file = str(snakemake.input[1])
 
-data = []
+mag_output_file = str(snakemake.output[0])
+sus_output_file = str(snakemake.output[1])
 
-with open(input_file) as f:
-    for line in f:
-        l = [float(i) for i in line.strip().split(sep)]
-        data.append(l)
-data = np.array(data)
+mag_data = np.genfromtxt(mag_input_file, skip_header=1)
+sus_data = np.genfromtxt(sus_input_file, skip_header=1, usecols=1)
+
+temps = mag_data[:,0]
+m_z = mag_data[:,1]
+m = mag_data[:,2]
+m_bloch = mag_data[:,3]
 
 plt.figure()
 
 title = "|M_z| vs. Temperature for "
 
-plt.title("|M_z| vs. Temperature.")
+plt.title("m_z vs. Temperature.")
 plt.xlabel("Temperature (K)")
 plt.ylabel("Magnetisation (T)")
 
-temps = data[:,0]
-mags = data[:,1]
-bloch_mags = data[:,2]
-
-plt.plot(temps, mags, label='JAMS data')
-plt.plot(temps, bloch_mags, label='Bloch law')
+plt.plot(temps, m_z, label='JAMS M_z')
+plt.plot(temps, m, label='JAMS |M|')
+plt.plot(temps, m_bloch, label='Bloch law')
 plt.legend()
 
-plt.savefig(output_file)
+plt.savefig(mag_output_file)
+
+plt.figure()
+
+plt.title("Susceptibility vs. temperature")
+plt.xlabel("Temperature (K)")
+plt.ylabel("Temperature-normalised susceptibility (T^2)")
+
+plt.plot(temps, sus_data)
+
+plt.savefig(sus_output_file)
