@@ -5,6 +5,8 @@ localrules: gen_unitcell, render_equi_cfg, render_mag_cfg, render_magnon_cfg, an
 
 constant=2.5
 
+temperatures = [f'{x:.1f}' for x in range(50, 550, 50)]
+ 
 d_nbrs = {
     "sc_100": constant,
     "bcc_100": (constant*np.sqrt(3))/2,
@@ -13,28 +15,18 @@ d_nbrs = {
     "fcc_111": (constant*np.sqrt(3))/np.sqrt(2)
 }
 
-temperatures = [f'{x:.1f}' for x in range(25, 550, 25)]
-#temperatures = [50.0, 100.0, 200.0, 300.0, 400.0]
-
-
 cells = {
-    "sc_100"
-    #"bcc_100",
-    #"bcc_110",
+    #"sc_100"
+    "bcc_100",
+    "bcc_110"
     #"fcc_100"
     #"fcc_111"
 }
 
-layers = range(2, 6)
-
 # applied field in Tesla
 app_field = 0.1
 # Number of times to repeat the unit cell in-plane
-repeats=32
-
-#layers = 3
-#temp = 50.0
-
+repeats=64
 
 # generate the supercell
 rule gen_unitcell:
@@ -86,7 +78,7 @@ rule render_mag_cfg:
         r_cutoff=lambda wc: d_nbrs[wc.lattice],
         field=app_field,
         rep=repeats,
-        gilbert_damp=0.001
+        gilbert_damp=0.1
     template_engine:
         "jinja2"
 
@@ -96,35 +88,36 @@ rule render_mag_cfg:
 # in this thermalised state are passed to JAMS to determine the magnon spectrum. We use a more
 # realistic value of the Gilbert damping parameter to determine the magnon spectrum, which also
 # makes the spectrum less diffuse (WHY?)
-rule equilibration:
-    input:
-        "{lattice}/{layer}/{T}K/jams_equilibration.cfg",
-        "{lattice}/{layer}/unitcell.cfg"
-    output:
-        "{lattice}/{layer}/{T}K/jams_equilibrated_final.h5"
-    shell:
-        "../jams-v2.14.0+1.9ca4fcdb --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams_equilibrated\" {input}"
+#rule equilibration:
+#    input:
+#        "{lattice}/{layer}/{T}K/jams_equilibration.cfg",
+#        "{lattice}/{layer}/unitcell.cfg"
+#    output:
+#        "{lattice}/{layer}/{T}K/jams_equilibrated_final.h5"
+#    shell:
+#        "../jams-v2.14.0+1.9ca4fcdb --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams_equilibrated\" {input} > {wildcards.lattice}/{wildcards.layer}/{wildcards.T}K/jams_equilibration.log"
 
 rule calculate_thermodynamics:
     input:
         "{lattice}/{layer}/{T}K/jams_mag.cfg",
-        "{lattice}/{layer}/unitcell.cfg",
-        "{lattice}/{layer}/{T}K/jams_equilibrated_final.h5"
+        "{lattice}/{layer}/unitcell.cfg"
+        #"{lattice}/{layer}/{T}K/jams_equilibrated_final.h5"
     output:
         "{lattice}/{layer}/{T}K/jams_mag.tsv"
     shell:
-        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' " 
-    
-rule calculate_magnon_spectrum:
-    input:
-        "{lattice}/{layer}/{T}K/jams_magnon.cfg",
-        "{lattice}/{layer}/unitcell.cfg",
-        "{lattice}/{layer}/{T}K/jams_equilibrated_final.h5"
-    output:
-        "{lattice}/{layer}/{T}K/jams_magnon_spectrum_path_0.tsv"
-    shell:
-        "../jams --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams_magnon\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' "
- 
+        "../jams-v2.14.0+1.9ca4fcdb --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams\" {input[0]} {input[1]}  > {wildcards.lattice}/{wildcards.layer}/{wildcards.T}K/jams_magnetisation.log" 
+
+# \'lattice: {{spins=\"{input[2]}\";}};\'
+
+#rule calculate_magnon_spectrum:
+#    input:
+#        "{lattice}/{layer}/{T}K/jams_magnon.cfg",
+#        "{lattice}/{layer}/unitcell.cfg",
+#        "{lattice}/{layer}/{T}K/jams_equilibrated_final.h5"
+#    output:
+#        "{lattice}/{layer}/{T}K/jams_magnon_magnon_spectrum_path_0.tsv"
+#    shell:
+#        "../jams-v2.14.0+1.9ca4fcdb --output=\"{wildcards.lattice}/{wildcards.layer}/{wildcards.T}K\" --name=\"jams_magnon\" {input[0]} {input[1]} \'lattice: {{spins=\"{input[2]}\";}};\' > {wildcards.lattice}/{wildcards.layer}/{wildcards.T}K/jams_magnon.log" 
 
 rule analyse_magnetisation:
     input:
@@ -151,13 +144,13 @@ rule plot_magnetisation:
     script:
         "plot_mag_data.py"
 
-rule plot_magnon_spectrum:
-    input:
-        "{lattice}/{layer}/{T}K/jams_magnon_spectrum_path_0.tsv"
-    output:
-        "figures/magnon_spectrum_{lattice}_{layer}_{T}K.pdf"
-    params:
-        #ylim=20.0,
-        vmin=1e-12
-    script:
-        "plot_magnon_spectrum.py"
+#rule plot_magnon_spectrum:
+#    input:
+#        "{lattice}/{layer}/{T}K/jams_magnon_magnon_spectrum_path_0.tsv"
+#    output:
+#        "figures/magnon_spectrum_{lattice}_{layer}_{T}K.pdf"
+#    params:
+#        #ylim=20.0,
+#        vmin=1e-12
+#    script:
+#        "plot_magnon_spectrum.py"

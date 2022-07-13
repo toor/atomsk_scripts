@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 import re
 from pymbar import timeseries as ts
 from scipy.constants import k, m_e, hbar, e
+from scipy.special import zeta, gamma
+
 
 in_files = snakemake.input
 mag_out_file = snakemake.output[0]
@@ -40,7 +42,7 @@ V = l_x*l_y*l_z
 v_ws = V/N
 
 # Bloch's law in thin films
-def bloch(T):
+def bloch_thinfilms(T):
     # bohr magneton, mu_B = 5.7883818012×10−5 eV*T^-1
     bohr = (e*hbar)/(2*m_e)
     g = 2
@@ -65,8 +67,24 @@ def bloch(T):
 
     return m_z
 
+def bloch_bulk(T):
+    bohr = (e*hbar)/(2*m_e)
+    g = 2
+
+    S = 1.25
+    J = 2e-21
+    D = 2*J*S*(constant**2) 
+
+    # saturation magnetisation at T=0K
+    M_zs = g*bohr*S/v_ws
+    prefactor = g*bohr*zeta(3/2)*gamma(3/2)/(M_zs*(4*(np.pi**2)))
+
+    m_z = 1 - prefactor*np.power((k*T)/D, 3/2)
+
+    return m_z
+
 with open(mag_out_file, 'a') as f:
-    w_str = "T" + sep + "M_z" + sep + "M" + sep + "M_bloch" + "\n"
+    w_str = "T" + sep + "M_z" + sep + "M" + sep + "M_bloch (thin film)" + sep + "M_bloch (bulk)" + "\n"
     f.write(w_str)
     f.close()
 with open(sus_out_file, 'a') as f:
@@ -81,11 +99,12 @@ for in_file in in_files:
     
     m = re.search(TEMP_REGEX, in_file)
     temp = float(in_file[m.start():m.end()])
-    mag_bloch = bloch(temp)
+    mag_bloch_thin = bloch_thinfilms(temp)
+    mag_bloch_bulk = bloch_bulk(temp)
     
-    m_z = np.mean(np.abs(m_z_data))
-    mag = np.mean(np.abs(m_data))
-    sus = np.var(np.abs(m_data))
+    m_z = np.mean(m_z_data[4000:])
+    mag = np.mean(m_data[4000:])
+    sus = np.var(m_data[4000:])
 
     t0_mz = ts.detectEquilibration(m_z_data)[0]
     t0_m = ts.detectEquilibration(m_data)[0]
@@ -93,7 +112,7 @@ for in_file in in_files:
     #print("Using an MBAR estimator, detected the end of the equilibration period for m_z at timestep index " + str(t0_mz) + " at T=" + str(temp))
     print("Using an MBAR estimator, detected the end of the equilibration period for m at timestep index " + str(t0_m) + " at T=" + str(temp))
 
-    mag_str = str(temp) + sep + str(round(m_z, 3)) + sep + str(round(mag, 3)) + sep + str(round(mag_bloch, 3)) + "\n"
+    mag_str = str(temp) + sep + str(round(m_z, 3)) + sep + str(round(mag, 3)) + sep + str(round(mag_bloch_thin, 3)) + sep + str(round(mag_bloch_bulk, 3)) + "\n"
     sus_str = str(temp) + sep + str(round(sus, 3)) + "\n"
 
     with open(str(mag_out_file), 'a') as f:

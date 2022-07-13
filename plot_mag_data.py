@@ -16,6 +16,7 @@ temps = mag_data[:,0]
 m_z = mag_data[:,1]
 m = mag_data[:,2]
 m_bloch = mag_data[:,3]
+m_bloch_bulk = mag_data[:,4]
 
 plt.figure()
 
@@ -27,7 +28,8 @@ plt.ylabel("Magnetisation (T)")
 
 plt.scatter(temps, m_z, label='JAMS M_z', color='red', marker='x')
 plt.scatter(temps, m, label='JAMS |M|', color='blue', marker='x')
-plt.plot(temps, m_bloch, label='Bloch law')
+plt.plot(temps, m_bloch, label='Bloch\'s law (thin film)')
+plt.plot(temps, m_bloch_bulk, label='Bloch\'s law (bulk)')
 plt.legend()
 
 plt.savefig(mag_output_file)
