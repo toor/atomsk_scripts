@@ -133,8 +133,8 @@ plt.plot(1.0-k, E, "w--")
 plt.xlim(0,0.5)
 
 ax = plt.gca()
-ax.set_aspect(aspect=0.3333)
-plt.xticks(np.arange(0.0, 1.0, 0.5))
+#ax.set_aspect(aspect=0.3333)
+#plt.xticks(np.arange(0.0, 1.0, 0.5))
 
 
 if hasattr(snakemake.params, "title"):

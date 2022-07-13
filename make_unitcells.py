@@ -194,8 +194,6 @@ def main(element, lattice_type, a, layers, ak_out, jams_out):
     generate_supercell(input_file, ak_out, d_plane, int(layers))
 
     convert_jams(element, a, ak_out, jams_out)
-    
-    filename = lattice_type + "/" + str(layers) + "/temperatures.dat"
 
     return
 

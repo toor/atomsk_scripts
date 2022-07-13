@@ -25,8 +25,8 @@ plt.title("m_z vs. Temperature.")
 plt.xlabel("Temperature (K)")
 plt.ylabel("Magnetisation (T)")
 
-plt.plot(temps, m_z, label='JAMS M_z')
-plt.plot(temps, m, label='JAMS |M|')
+plt.scatter(temps, m_z, label='JAMS M_z', color='red', marker='x')
+plt.scatter(temps, m, label='JAMS |M|', color='blue', marker='x')
 plt.plot(temps, m_bloch, label='Bloch law')
 plt.legend()
 
@@ -38,6 +38,6 @@ plt.title("Susceptibility vs. temperature")
 plt.xlabel("Temperature (K)")
 plt.ylabel("Temperature-normalised susceptibility (T^2)")
 
-plt.plot(temps, sus_data)
+plt.scatter(temps, sus_data, color='red', marker='x')
 
 plt.savefig(sus_output_file)
