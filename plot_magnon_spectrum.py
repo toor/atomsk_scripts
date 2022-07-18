@@ -139,6 +139,7 @@ ax = plt.gca()
 
 if hasattr(snakemake.params, "title"):
     plt.title(snakemake.params["title"])
+title = "Magnon spectrum at T = " + str(snakemake.params.get("temp"))
 
 plt.savefig(snakemake.output[0], dpi=300, bbox_inches='tight')
 plt.close()

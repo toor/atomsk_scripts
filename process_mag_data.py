@@ -50,7 +50,7 @@ def bloch_thinfilms(T):
     # TODO make all of these parameters in the Snakefile, to also pass to e.g. jinja
     # Exchange
     J = 2e-21
-    S = 1.25
+    S = int(snakemake.params.get("mu_s"))/2
     # Spinwave stiffness
     D = 2*J*S*(constant**2)
 
@@ -71,7 +71,7 @@ def bloch_bulk(T):
     bohr = (e*hbar)/(2*m_e)
     g = 2
 
-    S = 1.25
+    S = int(snakemake.params.get("mu_s"))/2
     J = 2e-21
     D = 2*J*S*(constant**2) 
 

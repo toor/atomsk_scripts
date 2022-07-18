@@ -20,9 +20,9 @@ m_bloch_bulk = mag_data[:,4]
 
 plt.figure()
 
-title = "|M_z| vs. Temperature for "
+title = str(snakemake.params[0]) + " " + str(snakemake.params[1]) + " layers; H_z = " + str(snakemake.params[3]) + ", mu_s = " + str(snakemake.params[4])
 
-plt.title("m_z vs. Temperature.")
+plt.title(title)
 plt.xlabel("Temperature (K)")
 plt.ylabel("Magnetisation (T)")
 

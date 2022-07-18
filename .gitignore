@@ -13,3 +13,5 @@ jams.cuda_job.sh
 tree_all.sh
 *.tsv
 figures/*
+logs/*
+results/*

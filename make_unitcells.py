@@ -89,6 +89,7 @@ def generate_supercell(input_file, output_file, d_plane, layers):
             cut_plane,
             "z",
             "-ow",
+            "-fractional",
             output_file,
             "cfg"]
 
@@ -188,7 +189,7 @@ def convert_jams(element, a, input_file, output_file):
         return
 
 def main(element, lattice_type, a, layers, ak_out, jams_out):   
-    input_file = lattice_type + "_" + element + ".xsf"
+    input_file = lattice_type + "_" + element + ".cfg"
 
     d_plane = generate_unit_cell(input_file, float(a), lattice_type, element)
     generate_supercell(input_file, ak_out, d_plane, int(layers))
